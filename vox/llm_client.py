@@ -5,8 +5,9 @@ import platform
 import re
 import requests
 
+from vox.config import get_model
+
 API_URL = "https://inference.do-ai.run/v1/chat/completions"
-MODEL = "llama3.3-70b-instruct"
 
 
 def _get_context() -> dict:
@@ -45,6 +46,7 @@ def generate_command(query: str, api_key: str) -> str:
         PermissionError: Invalid API key.
         RuntimeError: Empty or unexpected response.
     """
+    model = get_model()
     ctx = _get_context()
     system_prompt = _build_system_prompt(ctx)
 
@@ -56,7 +58,7 @@ def generate_command(query: str, api_key: str) -> str:
                 "Authorization": f"Bearer {api_key}",
             },
             json={
-                "model": MODEL,
+                "model": model,
                 "messages": [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": query},
@@ -77,7 +79,7 @@ def generate_command(query: str, api_key: str) -> str:
         except Exception:
             err_msg = ""
         if "model" in err_msg.lower() and "tier" in err_msg.lower():
-            raise PermissionError(f"Model '{MODEL}' is not available on your subscription tier.")
+            raise PermissionError(f"Model '{model}' is not available on your subscription. Run `vox --setup` to pick another.")
         raise PermissionError("Invalid API key. Run `vox --setup` to reconfigure.")
     if response.status_code == 429:
         raise RuntimeError("Rate limited. Please wait a moment and try again.")
@@ -95,3 +97,4 @@ def generate_command(query: str, api_key: str) -> str:
         raise RuntimeError("Empty response from API. Try rephrasing your request.")
 
     return command
+
