@@ -1,7 +1,9 @@
 """CLI handler for Vox — argument parsing, command execution, UX flow."""
 
+import os
 import subprocess
 import sys
+import time
 
 from vox import __version__
 from vox.config import get_api_key, run_setup, reset_config
@@ -39,8 +41,30 @@ def _print_usage():
 """)
 
 
+def _add_to_shell_history(command: str):
+    """Append the command to the shell's history file so up-arrow retrieves it."""
+    try:
+        shell = os.environ.get("SHELL", "")
+        home = os.path.expanduser("~")
+
+        if "zsh" in shell:
+            history_file = os.path.join(home, ".zsh_history")
+            # zsh extended history format: : timestamp:0;command
+            entry = f": {int(time.time())}:0;{command}\n"
+        else:
+            # bash or other
+            history_file = os.path.join(home, ".bash_history")
+            entry = f"{command}\n"
+
+        with open(history_file, "a") as f:
+            f.write(entry)
+    except (IOError, OSError):
+        pass  # non-critical, don't break the flow
+
+
 def _run_command(command: str):
     """Execute a shell command and stream output to the terminal."""
+    _add_to_shell_history(command)
     try:
         result = subprocess.run(
             command,
