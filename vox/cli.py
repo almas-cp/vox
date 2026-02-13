@@ -6,6 +6,7 @@ import sys
 
 from vox import __version__
 from vox.config import get_api_key, run_setup, reset_config
+from vox.llm_client import generate_command
 
 # ANSI escape codes
 GREEN = "\033[32m"
