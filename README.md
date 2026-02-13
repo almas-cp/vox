@@ -18,7 +18,14 @@ $ vox find all python files modified today
 ```bash
 git clone https://github.com/almas-cp/vox.git
 cd vox
-pip install -e .
+chmod +x install.sh
+./install.sh
+```
+
+This installs `vox` system-wide so it **persists across reboots**. To uninstall:
+
+```bash
+./uninstall.sh
 ```
 
 ## Setup
@@ -28,6 +35,8 @@ On first run, you'll be prompted for your [DigitalOcean Gradient](https://www.di
 ```bash
 vox --setup
 ```
+
+Your key is stored in `~/.vox/config.json`.
 
 ## Usage
 
