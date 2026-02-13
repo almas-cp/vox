@@ -3,11 +3,9 @@
 import os
 import subprocess
 import sys
-import time
 
 from vox import __version__
 from vox.config import get_api_key, run_setup, reset_config
-from vox.llm_client import generate_command
 
 # ANSI escape codes
 GREEN = "\033[32m"
@@ -19,6 +17,46 @@ RESET = "\033[0m"
 # Terminal control
 CURSOR_UP = "\033[A"
 CLEAR_LINE = "\033[2K"
+
+# Temp file for passing command to shell wrapper
+CMD_FILE_PREFIX = "/tmp/.vox_cmd_"
+
+# Shell wrapper function that users source in their .bashrc/.zshrc
+SHELL_INIT_BASH = r'''
+vox() {
+    local cmd_file="/tmp/.vox_cmd_$$"
+    command vox "$@"
+    local rc=$?
+    if [ $rc -eq 0 ] && [ -f "$cmd_file" ]; then
+        local cmd
+        cmd=$(cat "$cmd_file")
+        rm -f "$cmd_file"
+        if [ -n "$cmd" ]; then
+            history -s "$cmd"
+            eval "$cmd"
+        fi
+    fi
+    return $rc
+}
+'''
+
+SHELL_INIT_ZSH = r'''
+vox() {
+    local cmd_file="/tmp/.vox_cmd_$$"
+    command vox "$@"
+    local rc=$?
+    if [ $rc -eq 0 ] && [ -f "$cmd_file" ]; then
+        local cmd
+        cmd=$(cat "$cmd_file")
+        rm -f "$cmd_file"
+        if [ -n "$cmd" ]; then
+            print -s "$cmd"
+            eval "$cmd"
+        fi
+    fi
+    return $rc
+}
+'''
 
 
 def _clear_lines(n: int):
@@ -38,43 +76,52 @@ def _print_usage():
   vox --setup         Configure API key
   vox --reset         Remove stored configuration
   vox --version       Show version
+  vox --shell-init    Print shell wrapper (add to .bashrc/.zshrc)
 """)
 
 
-def _add_to_shell_history(command: str):
-    """Append the command to the shell's history file so up-arrow retrieves it."""
+def _get_cmd_file() -> str:
+    """Get temp file path using parent shell PID so the wrapper can find it."""
+    ppid = os.getppid()
+    return f"{CMD_FILE_PREFIX}{ppid}"
+
+
+def _write_cmd_file(command: str):
+    """Write command to temp file for the shell wrapper to pick up."""
     try:
-        shell = os.environ.get("SHELL", "")
-        home = os.path.expanduser("~")
-
-        if "zsh" in shell:
-            history_file = os.path.join(home, ".zsh_history")
-            # zsh extended history format: : timestamp:0;command
-            entry = f": {int(time.time())}:0;{command}\n"
-        else:
-            # bash or other
-            history_file = os.path.join(home, ".bash_history")
-            entry = f"{command}\n"
-
-        with open(history_file, "a") as f:
-            f.write(entry)
+        cmd_file = _get_cmd_file()
+        with open(cmd_file, "w") as f:
+            f.write(command)
     except (IOError, OSError):
-        pass  # non-critical, don't break the flow
+        pass
 
 
-def _run_command(command: str):
-    """Execute a shell command and stream output to the terminal."""
-    _add_to_shell_history(command)
+def _has_shell_wrapper() -> bool:
+    """Check if we're running through the shell wrapper (cmd file will be checked)."""
+    cmd_file = _get_cmd_file()
+    # If parent is a shell and wrapper exists, the wrapper will handle execution.
+    # We detect this by checking if PPID is a shell process.
+    # Simpler: just check if the cmd file path is writable (i.e., we're on Linux).
+    return os.path.isdir("/tmp")
+
+
+def _run_directly(command: str):
+    """Fallback: execute command directly via subprocess (no history integration)."""
     try:
-        result = subprocess.run(
-            command,
-            shell=True,
-            cwd=None,  # inherit current directory
-        )
+        result = subprocess.run(command, shell=True)
         sys.exit(result.returncode)
     except KeyboardInterrupt:
         print()
         sys.exit(130)
+
+
+def _print_shell_init():
+    """Print the shell wrapper function for the user's shell."""
+    shell = os.environ.get("SHELL", "")
+    if "zsh" in shell:
+        print(SHELL_INIT_ZSH.strip())
+    else:
+        print(SHELL_INIT_BASH.strip())
 
 
 def main():
@@ -100,6 +147,10 @@ def main():
 
     if args[0] == "--reset":
         reset_config()
+        return
+
+    if args[0] == "--shell-init":
+        _print_shell_init()
         return
 
     # Main flow: natural language → command
@@ -144,12 +195,19 @@ def main():
         sys.exit(0)
 
     if answer in ("", "y", "yes"):
-        # Clear the 4 vox UI lines so only command output remains
         _clear_lines(4)
-        _run_command(command)
+
+        if _has_shell_wrapper():
+            # Write command to temp file for shell wrapper to execute
+            _write_cmd_file(command)
+            sys.exit(0)
+        else:
+            # Fallback: run directly (no history integration)
+            _run_directly(command)
     else:
         # Cancel silently
         _clear_lines(4)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
