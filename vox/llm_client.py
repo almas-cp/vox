@@ -5,9 +5,11 @@ import platform
 import re
 import requests
 
-from vox.config import get_model
+from rich.console import Console
 
-API_URL = "https://inference.do-ai.run/v1/chat/completions"
+from vox.config import get_model, get_api_url, get_provider
+
+console = Console()
 
 
 def _get_context() -> dict:
@@ -31,9 +33,7 @@ def _build_system_prompt(ctx: dict) -> str:
 
 def _clean_response(text: str) -> str:
     """Strip markdown code blocks, backticks, and extra whitespace from LLM response."""
-    # Remove ```lang ... ``` blocks
     text = re.sub(r"```[\w]*\n?", "", text)
-    # Remove inline backticks
     text = text.strip("`").strip()
     return text
 
@@ -43,16 +43,18 @@ def generate_command(query: str, api_key: str) -> str:
 
     Raises:
         ConnectionError: API is unreachable.
-        PermissionError: Invalid API key.
+        PermissionError: Invalid API key or model access issue.
         RuntimeError: Empty or unexpected response.
     """
     model = get_model()
+    api_url = get_api_url()
+    provider = get_provider()
     ctx = _get_context()
     system_prompt = _build_system_prompt(ctx)
 
     try:
         response = requests.post(
-            API_URL,
+            api_url,
             headers={
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {api_key}",
@@ -73,18 +75,28 @@ def generate_command(query: str, api_key: str) -> str:
         raise ConnectionError("API request timed out. Try again.")
 
     if response.status_code == 401:
-        # 401 can mean invalid key OR model not available on subscription tier
         try:
             err_msg = response.json().get("error", {}).get("message", "")
         except Exception:
             err_msg = ""
-        if "model" in err_msg.lower() and "tier" in err_msg.lower():
-            raise PermissionError(f"Model '{model}' is not available on your subscription. Run `vox --setup` to pick another.")
+        if "model" in err_msg.lower() or "tier" in err_msg.lower():
+            raise PermissionError(
+                f"Model '{model}' is not available on your {provider} plan. "
+                "Run `vox --setup` to pick another."
+            )
         raise PermissionError("Invalid API key. Run `vox --setup` to reconfigure.")
+
     if response.status_code == 429:
         raise RuntimeError("Rate limited. Please wait a moment and try again.")
     if response.status_code != 200:
-        raise RuntimeError(f"API returned HTTP {response.status_code}.")
+        try:
+            err_detail = response.json().get("error", {}).get("message", "")
+        except Exception:
+            err_detail = ""
+        raise RuntimeError(
+            f"API returned HTTP {response.status_code}."
+            + (f" {err_detail}" if err_detail else "")
+        )
 
     try:
         data = response.json()
@@ -97,4 +109,3 @@ def generate_command(query: str, api_key: str) -> str:
         raise RuntimeError("Empty response from API. Try rephrasing your request.")
 
     return command
-
