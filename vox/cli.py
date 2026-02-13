@@ -180,6 +180,8 @@ def main():
 
     if answer in ("", "y", "yes"):
         _clear_lines(4)
+        # Re-print the command so it's visible above the output
+        console.print(f"[dim]$[/dim] [bold]{command}[/bold]")
 
         if _has_shell_wrapper():
             _write_cmd_file(command)
