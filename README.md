@@ -17,6 +17,14 @@ $ vox find all python files modified today
 
 ## Install
 
+**One-liner** (Ubuntu, Kali, Debian, and other Debian-based distros):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/almas-cp/vox/refs/heads/main/install.sh | bash
+```
+
+**Or clone and install manually:**
+
 ```bash
 git clone https://github.com/almas-cp/vox.git
 cd vox
@@ -27,7 +35,7 @@ chmod +x install.sh
 This installs `vox` system-wide so it **persists across reboots**. To uninstall:
 
 ```bash
-./uninstall.sh
+pip uninstall vox -y
 ```
 
 ## Setup
