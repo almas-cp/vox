@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>vox - Natural Language to Shell</title>
+    <style>
+        body {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            background-color: #0d1117;
+            color: #c9d1d9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        h1 { color: #58a6ff; font-weight: normal; margin-bottom: 10px; }
+        p { color: #8b949e; margin-bottom: 30px; }
+        .interactive-box {
+            background: #161b22;
+            padding: 20px;
+            border-radius: 6px;
+            border: 1px solid #30363d;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        input {
+            width: 100%;
+            max-width: 400px;
+            padding: 10px 14px;
+            font-family: inherit;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            border-radius: 4px;
+            font-size: 16px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+        input:focus {
+            outline: none;
+            border-color: #58a6ff;
+        }
+        button {
+            background-color: #238636;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-family: inherit;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #2ea043;
+        }
+        .examples {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #8b949e;
+        }
+        .examples code {
+            background: rgba(240, 246, 252, 0.1);
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: #e6edf3;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>vox API</h1>
+    <p>Convert natural language directly into shell commands.</p>
+
+    <!-- UI for users visiting the root page -->
+    <div class="interactive-box" id="uiBox">
+        <input type="text" id="nlInput" placeholder="e.g. compress this folder to tar.gz" aria-label="Natural Language Command" onkeydown="if(event.key === 'Enter') handleRedirect()">
+        <br>
+        <button onclick="handleRedirect()">Get Command</button>
+    </div>
+
+    <div class="examples">
+        <p>Or use directly via curl:</p>
+        <code>curl "https://vox.almaas.workers.dev/list all files"</code>
+        <br><br>
+        <p>Browser shortcut:</p>
+        <code>https://almas-cp.github.io/vox/?list all files</code>
+    </div>
+
+    <script>
+        const WORKER_URL = "https://vox.almaas.workers.dev/";
+
+        // Function to extract query from URL (?query or #query) and redirect
+        function checkAndRedirect() {
+            // Get string after ? or #
+            let query = window.location.search.substring(1) || window.location.hash.substring(1);
+            
+            if (query) {
+                // Decode the query (it might already be URL encoded)
+                query = decodeURIComponent(query);
+                
+                // Hide the UI to make the redirect smoother
+                document.body.innerHTML = "<h2 style='color:#58a6ff; font-family:monospace; margin-top:20vh;'>Redirecting to API...</h2>";
+                
+                // Redirect user to the cloudflare worker API Endpoint
+                window.location.replace(WORKER_URL + encodeURIComponent(query));
+            }
+        }
+
+        // Triggered by the interactive button/input
+        function handleRedirect() {
+            const val = document.getElementById("nlInput").value.trim();
+            if (val) {
+                window.location.href = WORKER_URL + encodeURIComponent(val);
+            }
+        }
+
+        // Check for redirect immediately when script loads
+        checkAndRedirect();
+    </script>
+</body>
+</html>
