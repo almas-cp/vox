@@ -3,112 +3,450 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>vox - Natural Language to Shell</title>
+    <meta name="description" content="vox API - Convert natural language directly into shell commands instantly.">
+    <title>vox ✨ Natural Language to Shell</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
     <style>
+        :root {
+            --bg-color: #030712;
+            --card-bg: rgba(17, 24, 39, 0.4);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --accent-glow: rgba(99, 102, 241, 0.5);
+            --accent-color: #818cf8;
+            --accent-hover: #6366f1;
+            --input-bg: rgba(3, 7, 18, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            background-color: #0d1117;
-            color: #c9d1d9;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
-            text-align: center;
+            min-height: 100vh;
+            position: relative;
+            overflow: hidden;
+            padding: 1rem;
         }
-        h1 { color: #58a6ff; font-weight: normal; margin-bottom: 10px; }
-        p { color: #8b949e; margin-bottom: 30px; }
-        .interactive-box {
-            background: #161b22;
-            padding: 20px;
-            border-radius: 6px;
-            border: 1px solid #30363d;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+
+        /* Animated Background Elements */
+        .bg-glow {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: -1;
+            animation: float 10s infinite ease-in-out;
+            opacity: 0.6;
+            pointer-events: none;
         }
-        input {
+        
+        .glow-1 {
+            width: 400px;
+            height: 400px;
+            background: rgba(99, 102, 241, 0.25);
+            top: -100px;
+            left: -100px;
+            animation-delay: 0s;
+        }
+        
+        .glow-2 {
+            width: 500px;
+            height: 500px;
+            background: rgba(236, 72, 153, 0.15);
+            bottom: -200px;
+            right: -100px;
+            animation-delay: -3s;
+        }
+
+        .glow-3 {
+            width: 300px;
+            height: 300px;
+            background: rgba(56, 189, 248, 0.15);
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: -6s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
+        }
+
+        /* Container */
+        .container {
             width: 100%;
-            max-width: 400px;
-            padding: 10px 14px;
-            font-family: inherit;
-            background: #0d1117;
-            border: 1px solid #30363d;
-            color: #c9d1d9;
-            border-radius: 4px;
-            font-size: 16px;
-            margin-bottom: 15px;
-            box-sizing: border-box;
+            max-width: 600px;
+            text-align: center;
+            animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(20px);
+            z-index: 10;
         }
+
+        @keyframes slideUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Header */
+        h1 {
+            font-size: 4.5rem;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        @media (max-width: 480px) {
+            h1 { font-size: 3.5rem; }
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--accent-color);
+            padding: 0.25rem 0.875rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.1);
+        }
+
+        .badge::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background-color: var(--accent-color);
+            border-radius: 50%;
+            margin-right: 6px;
+            box-shadow: 0 0 8px var(--accent-color);
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        p.subtitle {
+            font-size: 1.125rem;
+            color: var(--text-muted);
+            margin-bottom: 2.5rem;
+            line-height: 1.6;
+            max-width: 90%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Glassmorphism Card */
+        .interactive-box {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 2.5rem;
+            border-radius: 20px;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .interactive-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4), 0 0 20px rgba(99,102,241,0.1), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+
+        /* Input & Button Base */
+        .input-group {
+            position: relative;
+            display: flex;
+            gap: 12px;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 480px) {
+            .input-group {
+                flex-direction: column;
+            }
+        }
+
+        input {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--input-bg);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-main);
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        input::placeholder {
+            color: #6b7280;
+        }
+
         input:focus {
             outline: none;
-            border-color: #58a6ff;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(99,102,241,0.2), inset 0 2px 4px rgba(0,0,0,0.1);
+            background: rgba(17,24,39,0.8);
         }
+
         button {
-            background-color: #238636;
+            background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
             color: white;
             border: none;
-            padding: 10px 20px;
-            font-family: inherit;
-            font-size: 16px;
-            border-radius: 4px;
+            padding: 1rem 1.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 12px;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+            position: relative;
+            overflow: hidden;
+            white-space: nowrap;
         }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
         button:hover {
-            background-color: #2ea043;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+            background: linear-gradient(135deg, #8b95fa 0%, #6d70f8 100%);
         }
-        .examples {
-            margin-top: 30px;
-            font-size: 14px;
-            color: #8b949e;
+
+        button:hover::before {
+            left: 100%;
         }
-        .examples code {
-            background: rgba(240, 246, 252, 0.1);
-            padding: 4px 8px;
-            border-radius: 4px;
-            color: #e6edf3;
+
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
         }
+
+        .hint-text {
+            text-align: left; 
+            font-size: 0.75rem; 
+            color: var(--text-muted); 
+            margin-top: 0.75rem; 
+            padding-left: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        kbd {
+            background: rgba(255,255,255,0.1); 
+            padding: 2px 6px; 
+            border-radius: 4px; 
+            font-family: 'JetBrains Mono', monospace;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #d1d5db;
+        }
+
+        /* Examples Section */
+        .examples-container {
+            margin-top: 3rem;
+            text-align: left;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+            backdrop-filter: blur(8px);
+        }
+
+        .example-block {
+            margin-bottom: 1.25rem;
+        }
+        
+        .example-block:last-child {
+            margin-bottom: 0;
+        }
+
+        .examples-container p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .examples-container p span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            box-shadow: 0 0 8px var(--accent-color);
+        }
+
+        code {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            background: #0d1117;
+            padding: 1rem;
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 0.875rem;
+            border: 1px solid rgba(255,255,255,0.03);
+            overflow-x: auto;
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        code::before {
+            content: '$';
+            color: var(--accent-color);
+            margin-right: 0.5rem;
+            user-select: none;
+        }
+
+        /* Redirect Overlay */
+        #redirectOverlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-color);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-main);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(99, 102, 241, 0.2);
+            border-top-color: var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .redirect-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.125rem;
+            color: var(--accent-color);
+            letter-spacing: 0.05em;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; text-shadow: 0 0 10px rgba(99, 102, 241, 0.5); }
+            50% { opacity: 0.5; text-shadow: none; }
+        }
+
     </style>
 </head>
 <body>
 
-    <h1>vox API</h1>
-    <p>Convert natural language directly into shell commands.</p>
+    <!-- Background Orbs -->
+    <div class="bg-glow glow-1"></div>
+    <div class="bg-glow glow-2"></div>
+    <div class="bg-glow glow-3"></div>
 
-    <!-- UI for users visiting the root page -->
-    <div class="interactive-box" id="uiBox">
-        <input type="text" id="nlInput" placeholder="e.g. compress this folder to tar.gz" aria-label="Natural Language Command" onkeydown="if(event.key === 'Enter') handleRedirect()">
-        <br>
-        <button onclick="handleRedirect()">Get Command</button>
+    <div class="container" id="mainContainer">
+        <div class="badge">API Serverless</div>
+        <h1>vox</h1>
+        <p class="subtitle">Translate natural language into executable shell commands instantly. No more digging through man pages.</p>
+
+        <!-- Main Interactive UI -->
+        <div class="interactive-box">
+            <div class="input-group">
+                <input type="text" id="nlInput" placeholder="e.g. find all large pdf files" aria-label="Natural Language Command" onkeydown="if(event.key === 'Enter') handleRedirect()" autocomplete="off" spellcheck="false">
+                <button onclick="handleRedirect()">Generate</button>
+            </div>
+            <div class="hint-text">
+                Press <kbd>Enter</kbd> to translate instantly
+            </div>
+        </div>
+
+        <!-- Integration Examples -->
+        <div class="examples-container">
+            <div class="example-block">
+                <p><span></span> CLI via cURL</p>
+                <code>curl "https://vox.almaas.workers.dev/extract this archive"</code>
+            </div>
+            <div class="example-block">
+                <p><span></span> Browser Quick Search</p>
+                <code>https://almas-cp.github.io/vox/?zip src folder</code>
+            </div>
+        </div>
     </div>
 
-    <div class="examples">
-        <p>Or use directly via curl:</p>
-        <code>curl "https://vox.almaas.workers.dev/list all files"</code>
-        <br><br>
-        <p>Browser shortcut:</p>
-        <code>https://almas-cp.github.io/vox/?list all files</code>
+    <!-- Redirect Overlay -->
+    <div id="redirectOverlay">
+        <div class="loader"></div>
+        <div class="redirect-text">Compiling command...</div>
     </div>
 
     <script>
         const WORKER_URL = "https://vox.almaas.workers.dev/";
 
+        function showRedirect() {
+            const overlay = document.getElementById('redirectOverlay');
+            overlay.style.display = 'flex';
+            // Trigger reflow
+            void overlay.offsetWidth;
+            overlay.style.opacity = '1';
+        }
+
         // Function to extract query from URL (?query or #query) and redirect
         function checkAndRedirect() {
-            // Get string after ? or #
             let query = window.location.search.substring(1) || window.location.hash.substring(1);
             
             if (query) {
-                // Decode the query (it might already be URL encoded)
                 query = decodeURIComponent(query);
+                showRedirect();
                 
-                // Hide the UI to make the redirect smoother
-                document.body.innerHTML = "<h2 style='color:#58a6ff; font-family:monospace; margin-top:20vh;'>Redirecting to API...</h2>";
-                
-                // Redirect user to the cloudflare worker API Endpoint
-                window.location.replace(WORKER_URL + encodeURIComponent(query));
+                // Slight delay for aesthetic transition
+                setTimeout(() => {
+                    window.location.replace(WORKER_URL + encodeURIComponent(query));
+                }, 400); 
             }
         }
 
@@ -116,12 +454,34 @@
         function handleRedirect() {
             const val = document.getElementById("nlInput").value.trim();
             if (val) {
-                window.location.href = WORKER_URL + encodeURIComponent(val);
+                showRedirect();
+                setTimeout(() => {
+                    window.location.href = WORKER_URL + encodeURIComponent(val);
+                }, 300);
+            }
+            else {
+                const input = document.getElementById("nlInput");
+                input.focus();
+                // Shake animation snippet if empty
+                input.style.transition = 'transform 0.1s ease';
+                input.style.transform = 'translateX(8px)';
+                setTimeout(() => input.style.transform = 'translateX(-8px)', 100);
+                setTimeout(() => input.style.transform = 'translateX(8px)', 200);
+                setTimeout(() => input.style.transform = 'translateX(0)', 300);
+                setTimeout(() => input.style.transition = 'all 0.3s ease', 400); // Reset transition
             }
         }
 
         // Check for redirect immediately when script loads
         checkAndRedirect();
+        
+        // Auto-focus input on load if no query
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!window.location.search && !window.location.hash) {
+                const input = document.getElementById('nlInput');
+                if (input) input.focus();
+            }
+        });
     </script>
 </body>
 </html>
