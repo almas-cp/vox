@@ -1,6 +1,3 @@
-<p align="center">
-  <img src=".github/banner.png" alt="vox banner" width="100%" />
-</p>
 
 <h1 align="center">vox</h1>
 
@@ -266,8 +263,6 @@ curl "http://localhost:8787/list all files"
 vox/
 ├── src/
 │   └── index.js        # Worker entry — detection, prompt, API call
-├── .github/
-│   └── banner.png      # Repo banner
 ├── package.json
 ├── wrangler.toml       # Cloudflare Worker config
 └── README.md
